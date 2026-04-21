@@ -1,5 +1,5 @@
-import React from 'react';
-import { Trash2, ChevronUp, ChevronDown, Plus } from 'lucide-react';
+import React, { useRef } from 'react';
+import { Trash2, ChevronUp, ChevronDown, Plus, ImagePlus, X } from 'lucide-react';
 import type { Question, QuestionType } from '../types';
 
 interface QuestionEditorProps {
@@ -32,11 +32,13 @@ export function QuestionEditor({
     isFirst,
     isLast,
 }: QuestionEditorProps) {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
     if (isPdfMode) return null; // PDF is rendered by jsPDF
 
     const handleTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const newType = e.target.value as QuestionType;
-        let newQuestion: any = { id: question.id, type: newType, text: question.text };
+        let newQuestion: any = { id: question.id, type: newType, text: question.text, images: question.images };
 
         if (newType === 'MULTIPLE_CHOICE') {
             newQuestion = { ...newQuestion, options: ['', '', '', ''], correctAnswerIndex: undefined };
@@ -50,6 +52,45 @@ export function QuestionEditor({
         onChange(newQuestion);
     };
 
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 600; // Ridotto per maggiore leggerezza
+                let width = img.width;
+                let height = img.height;
+
+                if (width > MAX_WIDTH) {
+                    height *= MAX_WIDTH / width;
+                    width = MAX_WIDTH;
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, width, height);
+                
+                const base64 = canvas.toDataURL('image/jpeg', 0.6); // Qualità ridotta al 60%
+                const currentImages = question.images || [];
+                onChange({ ...question, images: [...currentImages, base64] });
+            };
+            img.src = event.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+        // Reset input
+        e.target.value = '';
+    };
+
+    const removeImage = (imgIndex: number) => {
+        const newImages = (question.images || []).filter((_, i) => i !== imgIndex);
+        onChange({ ...question, images: newImages });
+    };
+
     // ── Editor per ogni tipologia ──
     const renderEditor = () => {
         switch (question.type) {
@@ -57,35 +98,35 @@ export function QuestionEditor({
                 return (
                     <div className="mt-3">
                         <div className="flex items-center justify-between mb-2">
-                            <label className="text-xs font-medium text-gray-500">
-                                Opzioni (seleziona la corretta come promemoria)
+                            <label className="text-xs font-medium text-slate-500">
+                                Opzioni (seleziona la corretta per promemoria)
                             </label>
-                            <div className="space-x-1">
+                            <div className="flex gap-1">
                                 <button
                                     type="button"
                                     onClick={() => onChange({ ...question, options: question.options.slice(0, 4) })}
-                                    className={`text-xs px-2 py-0.5 rounded ${question.options.length === 4 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}
-                                >4 opz.</button>
+                                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${question.options.length === 4 ? 'bg-primary-600 text-white shadow-md shadow-primary-500/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                >4 OPZ.</button>
                                 <button
                                     type="button"
                                     onClick={() => onChange({ ...question, options: [...question.options.slice(0, 4), '', ''].slice(0, 6) })}
-                                    className={`text-xs px-2 py-0.5 rounded ${question.options.length === 6 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'}`}
-                                >6 opz.</button>
+                                    className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all ${question.options.length === 6 ? 'bg-primary-600 text-white shadow-md shadow-primary-500/20' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`}
+                                >6 OPZ.</button>
                             </div>
                         </div>
 
-                        <div className="space-y-1.5">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                             {question.options.map((opt, i) => (
-                                <div key={i} className="flex items-center gap-2">
+                                <div key={i} className="flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-100 shadow-sm transition-all hover:border-primary-100 group/opt">
                                     <input
                                         type="radio"
                                         name={`correct-${question.id}`}
                                         checked={question.correctAnswerIndex === i}
                                         onChange={() => onChange({ ...question, correctAnswerIndex: i })}
-                                        className="w-3.5 h-3.5 text-green-600 cursor-pointer"
+                                        className="w-4 h-4 text-primary-600 cursor-pointer border-slate-300 focus:ring-primary-500"
                                         title="Risposta corretta"
                                     />
-                                    <span className="text-xs font-bold text-gray-400 w-4">{String.fromCharCode(65 + i)})</span>
+                                    <span className="text-xs font-black text-slate-300 group-hover/opt:text-primary-300 transition-colors">{String.fromCharCode(65 + i)}</span>
                                     <input
                                         type="text"
                                         value={opt}
@@ -95,7 +136,7 @@ export function QuestionEditor({
                                             onChange({ ...question, options: newOptions });
                                         }}
                                         placeholder={`Opzione ${String.fromCharCode(65 + i)}`}
-                                        className="flex-1 border border-gray-200 rounded px-2.5 py-1.5 text-sm focus:outline-none focus:border-blue-500"
+                                        className="flex-1 text-sm font-medium focus:outline-none bg-transparent text-slate-700"
                                     />
                                 </div>
                             ))}
@@ -105,26 +146,26 @@ export function QuestionEditor({
 
             case 'TRUE_FALSE':
                 return (
-                    <div className="mt-3">
-                        <p className="text-xs text-gray-400 mb-1">Segna la risposta corretta (promemoria)</p>
-                        <div className="flex gap-6">
-                            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+                    <div className="mt-3 flex items-center gap-4 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mr-2">Corretta:</p>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
                                     type="radio"
                                     checked={question.correctAnswer === true}
                                     onChange={() => onChange({ ...question, correctAnswer: true })}
-                                    className="w-3.5 h-3.5"
+                                    className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500"
                                 />
-                                Vero
+                                <span className="text-sm font-bold text-slate-600 group-hover:text-primary-600 transition-colors">Vero</span>
                             </label>
-                            <label className="flex items-center gap-1.5 cursor-pointer text-sm">
+                            <label className="flex items-center gap-2 cursor-pointer group">
                                 <input
                                     type="radio"
                                     checked={question.correctAnswer === false}
                                     onChange={() => onChange({ ...question, correctAnswer: false })}
-                                    className="w-3.5 h-3.5"
+                                    className="w-4 h-4 text-primary-600 border-slate-300 focus:ring-primary-500"
                                 />
-                                Falso
+                                <span className="text-sm font-bold text-slate-600 group-hover:text-primary-600 transition-colors">Falso</span>
                             </label>
                         </div>
                     </div>
@@ -132,14 +173,15 @@ export function QuestionEditor({
 
             case 'FILL_IN_BLANK':
                 return (
-                    <div className="mt-3">
-                        <p className="text-xs text-gray-400 mb-2">
-                            Usa ____ nel testo per gli spazi vuoti. Le parole qui sotto sono solo promemoria.
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
+                    <div className="mt-4">
+                        <div className="flex items-center gap-2 mb-3">
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Parole Chiave</label>
+                            <span className="text-[10px] text-slate-300 font-medium">(Usa ____ nel testo della domanda)</span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
                             {question.correctAnswers.map((ans, i) => (
-                                <div key={i} className="flex items-center bg-gray-50 rounded border border-gray-200 text-sm">
-                                    <span className="px-1.5 py-1 bg-gray-100 text-gray-400 font-mono text-xs">{i + 1}</span>
+                                <div key={i} className="flex items-center bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden group/ans transition-all hover:border-primary-200">
+                                    <span className="px-2 py-1.5 bg-slate-50 text-slate-400 font-bold text-[10px] border-r border-slate-100">{i + 1}</span>
                                     <input
                                         type="text"
                                         value={ans}
@@ -148,20 +190,20 @@ export function QuestionEditor({
                                             newAns[i] = e.target.value;
                                             onChange({ ...question, correctAnswers: newAns });
                                         }}
-                                        className="px-2 py-1 text-sm w-28 focus:outline-none bg-transparent"
+                                        className="px-3 py-1.5 text-sm font-bold w-32 focus:outline-none bg-transparent text-slate-700"
                                         placeholder="Parola..."
                                     />
                                     <button
                                         onClick={() => onChange({ ...question, correctAnswers: question.correctAnswers.filter((_, idx) => idx !== i) })}
-                                        className="px-1.5 text-gray-400 hover:text-red-500 text-xs"
-                                    >×</button>
+                                        className="px-2 text-slate-300 hover:text-red-500 transition-colors"
+                                    ><X size={14} /></button>
                                 </div>
                             ))}
                             <button
                                 onClick={() => onChange({ ...question, correctAnswers: [...question.correctAnswers, ''] })}
-                                className="px-2 py-1 text-xs bg-blue-50 text-blue-600 rounded border border-blue-200 hover:bg-blue-100 flex items-center gap-1"
+                                className="px-4 py-2 text-xs font-bold bg-primary-50 text-primary-600 rounded-xl border border-primary-100 hover:bg-primary-100 transition-all flex items-center gap-2 shadow-sm"
                             >
-                                <Plus size={12} /> Aggiungi
+                                <Plus size={14} /> Aggiungi
                             </button>
                         </div>
                     </div>
@@ -169,16 +211,19 @@ export function QuestionEditor({
 
             case 'OPEN_ENDED':
                 return (
-                    <div className="mt-3">
-                        <label className="text-xs text-gray-400 mr-2">Righe vuote nel PDF:</label>
-                        <input
-                            type="number"
-                            min="1"
-                            max="20"
-                            value={question.lines}
-                            onChange={(e) => onChange({ ...question, lines: parseInt(e.target.value) || 4 })}
-                            className="w-14 border border-gray-200 rounded px-2 py-1 text-sm"
-                        />
+                    <div className="mt-3 flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                        <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Righe Spaziate nel PDF:</label>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                min="1"
+                                max="20"
+                                value={question.lines}
+                                onChange={(e) => onChange({ ...question, lines: parseInt(e.target.value) || 4 })}
+                                className="w-16 bg-slate-50 border border-slate-200 rounded-lg px-2 py-1.5 text-sm font-bold text-center focus:outline-none focus:border-primary-500"
+                            />
+                            <span className="text-[10px] text-slate-300 uppercase font-black">Lines</span>
+                        </div>
                     </div>
                 );
         }
@@ -241,16 +286,51 @@ export function QuestionEditor({
                 </div>
             </div>
 
-            {/* ─── Question Text ─── */}
-            <div className="space-y-1.5 mb-4">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide ml-1">Testo della Domanda</label>
-                <textarea
-                    value={question.text}
-                    onChange={(e) => onChange({ ...question, text: e.target.value })}
-                    placeholder="Scrivi qui la tua domanda..."
-                    className="w-full text-base font-medium border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 resize-none bg-white transition-all"
-                    rows={2}
-                />
+            {/* ─── Question Text & Image Control ─── */}
+            <div className="space-y-4 mb-4">
+                <div className="space-y-1.5">
+                    <div className="flex items-center justify-between px-1">
+                        <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">Testo della Domanda</label>
+                        <button 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="flex items-center gap-1.5 text-[10px] font-bold text-primary-600 hover:text-primary-700 transition-colors uppercase tracking-widest"
+                        >
+                            <ImagePlus size={14} />
+                            Aggiungi Immagine
+                        </button>
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            onChange={handleImageUpload} 
+                            accept="image/*" 
+                            className="hidden" 
+                        />
+                    </div>
+                    <textarea
+                        value={question.text}
+                        onChange={(e) => onChange({ ...question, text: e.target.value })}
+                        placeholder="Scrivi qui la tua domanda..."
+                        className="w-full text-base font-medium border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 resize-none bg-white transition-all shadow-sm"
+                        rows={2}
+                    />
+                </div>
+
+                {/* ─── Image Gallery ─── */}
+                {question.images && question.images.length > 0 && (
+                    <div className="flex flex-wrap gap-3 animate-in fade-in zoom-in-95 duration-500">
+                        {question.images.map((img, i) => (
+                            <div key={i} className="relative group/img overflow-hidden rounded-xl border border-slate-200 shadow-sm aspect-video h-24 bg-slate-100">
+                                <img src={img} alt="Preview" className="w-full h-full object-cover" />
+                                <button
+                                    onClick={() => removeImage(i)}
+                                    className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity text-white"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </div>
 
             {/* ─── Type-specific Editor ─── */}

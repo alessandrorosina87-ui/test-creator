@@ -113,6 +113,34 @@ export function generateTestPdf(
         doc.setFontSize(10);
 
         for (const q of group) {
+            // ── Renderizza Immagini se presenti ──
+            if (q.images && q.images.length > 0) {
+                for (const imgData of q.images) {
+                    try {
+                        const props = doc.getImageProperties(imgData);
+                        const ratio = props.height / props.width;
+                        
+                        // Limite massimo di 5cm (50mm) per lato
+                        const MAX_IMG_DIM = 50; 
+                        let imgW = Math.min(MAX_IMG_DIM, props.width);
+                        let imgH = imgW * ratio;
+
+                        // Se dopo il ridimensionamento della larghezza l'altezza supera ancora i 5cm
+                        if (imgH > MAX_IMG_DIM) {
+                            imgH = MAX_IMG_DIM;
+                            imgW = imgH / ratio;
+                        }
+
+                        y = ensureSpace(doc, y, imgH + 5);
+                        const x = ML + (CONTENT_W - imgW) / 2;
+                        doc.addImage(imgData, 'JPEG', x, y, imgW, imgH);
+                        y += imgH + 6;
+                    } catch (e) {
+                        console.error('Errore nel rendering dell\'immagine nel PDF', e);
+                    }
+                }
+            }
+
             switch (q.type) {
                 case 'MULTIPLE_CHOICE': {
                     const questionLines = getWrapped(doc, `${globalNum}) ${q.text}`, CONTENT_W - 5);

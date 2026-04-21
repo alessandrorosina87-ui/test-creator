@@ -4,6 +4,7 @@ export interface BaseQuestion {
     id: string;
     type: QuestionType;
     text: string;
+    images?: string[]; // base64 strings
 }
 
 export interface MultipleChoiceQuestion extends BaseQuestion {
