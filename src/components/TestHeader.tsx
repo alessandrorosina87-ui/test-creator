@@ -23,12 +23,12 @@ export function TestHeader({ metadata, isPdfMode, onChange }: TestHeaderProps) {
     ];
 
     return (
-        <div className="bg-white rounded-b-lg border border-gray-200 border-t-0 p-5">
-            <div className="space-y-3">
+        <div className="p-8 bg-white">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {fields.map((f) => (
-                    <div key={f.name} className="flex items-center gap-4">
-                        <label className="w-36 text-sm font-medium text-gray-700 text-right shrink-0">
-                            {f.label}:
+                    <div key={f.name} className="space-y-1.5">
+                        <label className="text-sm font-bold text-slate-500 ml-1">
+                            {f.label}
                         </label>
                         <input
                             type="text"
@@ -36,7 +36,7 @@ export function TestHeader({ metadata, isPdfMode, onChange }: TestHeaderProps) {
                             value={metadata[f.name]}
                             onChange={handleChange}
                             placeholder={f.placeholder}
-                            className="flex-1 border border-gray-200 bg-gray-50 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="premium-input"
                         />
                     </div>
                 ))}

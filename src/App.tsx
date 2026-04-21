@@ -50,42 +50,65 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-
-      {/* ─── Top Bar ─── */}
-      <div className="max-w-4xl mx-auto mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-800">Generatore Verifiche</h1>
-          <p className="text-gray-500 text-sm">Crea e impagina verifiche per la tua classe</p>
+    <div className="min-h-screen py-12 px-4 selection:bg-indigo-100">
+      
+      {/* ─── Hero / Header ─── */}
+      <div className="max-w-4xl mx-auto mb-12 text-center animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-xs font-bold tracking-wider uppercase mb-4">
+          <PlusCircle size={14} />
+          AI Powered Creator
         </div>
+        <h1 className="text-5xl md:text-6xl font-display font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-primary-600">
+          Verifiche Strutturate
+        </h1>
+        <p className="text-slate-500 text-lg max-w-xl mx-auto font-medium">
+          Progetta test professionali in pochi minuti. <br/>
+          Semplice, veloce, pronto per la stampa.
+        </p>
       </div>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-10">
 
         {/* ─── Sezione: Intestazione Verifica ─── */}
-        <div className="mb-6">
-          <div className="bg-blue-600 text-white px-5 py-3 rounded-t-lg font-semibold text-sm uppercase tracking-wide">
-            Creazione Verifica
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+          <div className="flex items-center gap-3 mb-4 px-2">
+            <div className="w-10 h-10 rounded-xl bg-primary-600 flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
+              <Eye size={20} />
+            </div>
+            <h2 className="text-xl font-display font-bold">Configurazione Intestazione</h2>
           </div>
-          <TestHeader
-            metadata={testDoc.metadata}
-            isPdfMode={false}
-            onChange={(metadata) => setTestDoc({ ...testDoc, metadata })}
-          />
-        </div>
+          <div className="premium-card overflow-hidden">
+            <TestHeader
+              metadata={testDoc.metadata}
+              isPdfMode={false}
+              onChange={(metadata) => setTestDoc({ ...testDoc, metadata })}
+            />
+          </div>
+        </section>
 
         {/* ─── Sezione: Domande ─── */}
-        <div className="mb-6">
-          <div className="bg-gray-700 text-white px-5 py-3 rounded-t-lg font-semibold text-sm uppercase tracking-wide">
-            Domande ({testDoc.questions.length})
+        <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-300">
+          <div className="flex items-center justify-between mb-4 px-2">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-900/20">
+                <PlusCircle size={20} />
+              </div>
+              <h2 className="text-xl font-display font-bold">Corpo della Verifica</h2>
+            </div>
+            <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-lg text-sm font-bold">
+              {testDoc.questions.length} Domande
+            </span>
           </div>
-          <div className="bg-white rounded-b-lg border border-gray-200 border-t-0 p-5">
+
+          <div className="premium-card p-6 md:p-8">
             {testDoc.questions.length === 0 ? (
-              <p className="text-gray-400 text-center py-8 italic">
-                Nessuna domanda aggiunta. Clicca il pulsante qui sotto per iniziare.
-              </p>
+              <div className="text-center py-16 border-2 border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                <p className="text-slate-400 font-medium">
+                  Ancora nessuna domanda. Inizia cliccando il tasto qui sotto.
+                </p>
+              </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {testDoc.questions.map((q, index) => (
                   <QuestionEditor
                     key={q.id}
@@ -104,35 +127,35 @@ function App() {
             )}
 
             {/* ─── + Aggiungi domanda ─── */}
-            <div className="mt-6">
+            <div className="mt-8">
               <button
                 onClick={addQuestion}
-                className="flex items-center gap-2 bg-white border-2 border-dashed border-gray-300 hover:border-blue-500 hover:bg-blue-50 text-gray-600 hover:text-blue-600 px-6 py-3 rounded-xl font-medium transition-all w-full justify-center"
+                className="w-full flex items-center gap-2 bg-slate-50 border-2 border-dashed border-slate-200 hover:border-primary-500 hover:bg-primary-50 text-slate-500 hover:text-primary-600 px-6 py-5 rounded-2xl font-bold transition-all justify-center group"
               >
-                <PlusCircle size={22} />
-                <span>Aggiungi Domanda</span>
+                <PlusCircle size={22} className="group-hover:scale-110 transition-transform" />
+                <span>Aggiungi una nuova domanda</span>
               </button>
             </div>
           </div>
-        </div>
+        </section>
 
         {/* ─── Pulsanti PDF ─── */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-12">
+        <div className="flex flex-col sm:flex-row gap-5 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 pb-20">
           <button
             onClick={() => generateTestPdf(testDoc.metadata, testDoc.questions, 'preview')}
             disabled={testDoc.questions.length === 0}
-            className="flex-1 flex items-center justify-center gap-2 bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 px-5 py-3 rounded-lg font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-secondary flex-1 py-4 text-lg"
           >
-            <Eye size={20} />
+            <Eye size={22} />
             <span>Anteprima PDF</span>
           </button>
           <button
             onClick={() => generateTestPdf(testDoc.metadata, testDoc.questions, 'download')}
             disabled={testDoc.questions.length === 0}
-            className="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-lg font-medium shadow-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            className="btn-primary flex-1 py-4 text-lg"
           >
-            <Download size={20} />
-            <span>Genera PDF Finale</span>
+            <Download size={22} />
+            <span>Scarica PDF Finale</span>
           </button>
         </div>
 

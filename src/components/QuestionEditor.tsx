@@ -185,41 +185,46 @@ export function QuestionEditor({
     };
 
     return (
-        <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 relative group">
+        <div className="bg-slate-50/50 rounded-2xl border border-slate-200 p-6 relative group transition-all hover:border-primary-200 hover:bg-white active:scale-[0.995]">
 
             {/* ─── Toolbar ─── */}
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-3">
                     {/* Reorder arrows */}
-                    <div className="flex flex-col">
+                    <div className="flex flex-col bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
                         <button
                             onClick={onMoveUp}
                             disabled={isFirst}
-                            className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
+                            className="p-1 text-slate-400 hover:bg-slate-50 hover:text-primary-600 disabled:opacity-20 transition-colors"
                             title="Sposta su"
                         >
-                            <ChevronUp size={16} />
+                            <ChevronUp size={14} />
                         </button>
+                        <div className="h-[1px] bg-slate-100" />
                         <button
                             onClick={onMoveDown}
                             disabled={isLast}
-                            className="text-gray-400 hover:text-gray-700 disabled:opacity-20 disabled:cursor-not-allowed"
+                            className="p-1 text-slate-400 hover:bg-slate-50 hover:text-primary-600 disabled:opacity-20 transition-colors"
                             title="Sposta giù"
                         >
-                            <ChevronDown size={16} />
+                            <ChevronDown size={14} />
                         </button>
                     </div>
-                    <span className="text-sm font-bold text-gray-500">#{index + 1}</span>
-                    <span className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 rounded font-medium">
-                        {TYPE_LABELS[question.type]}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        <span className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm font-bold shadow-md shadow-slate-900/20">
+                            {index + 1}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 bg-primary-100 text-primary-700 rounded-full font-bold uppercase tracking-wider">
+                            {TYPE_LABELS[question.type]}
+                        </span>
+                    </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <select
                         value={question.type}
                         onChange={handleTypeChange}
-                        className="text-xs border-gray-200 rounded border py-1 pl-2 pr-6 text-gray-600 bg-white"
+                        className="text-xs font-bold border-slate-200 rounded-lg border py-1.5 pl-3 pr-8 text-slate-600 bg-white hover:border-primary-500 transition-colors cursor-pointer outline-none focus:ring-2 focus:ring-primary-500/10"
                     >
                         <option value="MULTIPLE_CHOICE">Risposta Multipla</option>
                         <option value="TRUE_FALSE">Vero o Falso</option>
@@ -228,7 +233,7 @@ export function QuestionEditor({
                     </select>
                     <button
                         onClick={onDelete}
-                        className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                         title="Elimina domanda"
                     >
                         <Trash2 size={16} />
@@ -237,16 +242,21 @@ export function QuestionEditor({
             </div>
 
             {/* ─── Question Text ─── */}
-            <textarea
-                value={question.text}
-                onChange={(e) => onChange({ ...question, text: e.target.value })}
-                placeholder="Inserisci il testo della domanda..."
-                className="w-full text-sm border border-gray-200 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white"
-                rows={2}
-            />
+            <div className="space-y-1.5 mb-4">
+                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wide ml-1">Testo della Domanda</label>
+                <textarea
+                    value={question.text}
+                    onChange={(e) => onChange({ ...question, text: e.target.value })}
+                    placeholder="Scrivi qui la tua domanda..."
+                    className="w-full text-base font-medium border border-slate-200 rounded-xl px-4 py-3 focus:outline-none focus:border-primary-500 focus:ring-4 focus:ring-primary-500/10 resize-none bg-white transition-all"
+                    rows={2}
+                />
+            </div>
 
             {/* ─── Type-specific Editor ─── */}
-            {renderEditor()}
+            <div className="animate-in fade-in zoom-in-95 duration-300">
+                {renderEditor()}
+            </div>
         </div>
     );
 }
