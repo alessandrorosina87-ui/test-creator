@@ -2,10 +2,13 @@ import { useState } from 'react';
 import { TestHeader } from './components/TestHeader';
 import { QuestionEditor } from './components/QuestionEditor';
 import type { TestDocument, Question } from './types';
-import { PlusCircle, Eye, Download } from 'lucide-react';
-import { generateTestPdf } from './utils/pdfGenerator';
+import { PlusCircle, Eye, Download, Save, FileText, Shield, Check, Loader2 } from 'lucide-react';
+import { generateTestPdf, generateTeacherPdf } from './utils/pdfGenerator';
+import { salvaVerifica, getNextCode } from './services/verificheService';
+import { useRouter } from './Router';
 
 function App() {
+  const { navigate } = useRouter();
   const [testDoc, setTestDoc] = useState<TestDocument>({
     metadata: {
       title: '',
@@ -13,9 +16,12 @@ function App() {
       subject: '',
       date: '',
       teacherName: '',
+      note: '',
     },
     questions: [],
   });
+  const [saving, setSaving] = useState(false);
+  const [savedCode, setSavedCode] = useState<string | null>(null);
 
   const addQuestion = () => {
     const newQuestion: Question = {
@@ -23,6 +29,7 @@ function App() {
       type: 'MULTIPLE_CHOICE',
       text: '',
       options: ['', '', '', ''],
+      punteggio: 1,
     };
     setTestDoc({
       ...testDoc,
@@ -49,14 +56,49 @@ function App() {
     setTestDoc({ ...testDoc, questions: newQuestions });
   };
 
+  // ── Salva su Firestore e genera codice ──
+  const handleSave = async () => {
+    if (testDoc.questions.length === 0) return;
+    setSaving(true);
+    try {
+      const codice = await getNextCode();
+      await salvaVerifica(testDoc.metadata, testDoc.questions, codice);
+      setSavedCode(codice);
+      setTestDoc({ ...testDoc, codiceVerifica: codice });
+    } catch (e) {
+      console.error('Errore salvataggio:', e);
+      alert('Errore nel salvataggio. Riprova.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // ── Nuova verifica ──
+  const handleNew = () => {
+    setTestDoc({
+      metadata: { title: '', class: '', subject: '', date: '', teacherName: '', note: '' },
+      questions: [],
+    });
+    setSavedCode(null);
+  };
+
   return (
     <div className="min-h-screen py-12 px-4 selection:bg-indigo-100">
       
       {/* ─── Hero / Header ─── */}
       <div className="max-w-4xl mx-auto mb-12 text-center animate-in fade-in slide-in-from-top-4 duration-1000">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-xs font-bold tracking-wider uppercase mb-4">
-          <PlusCircle size={14} />
-          AI Powered Creator
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-xs font-bold tracking-wider uppercase">
+            <PlusCircle size={14} />
+            AI Powered Creator
+          </div>
+          <button
+            onClick={() => navigate('/admin')}
+            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold tracking-wider uppercase hover:bg-slate-200 transition-colors"
+          >
+            <Shield size={14} />
+            Admin
+          </button>
         </div>
         <h1 className="text-5xl md:text-6xl font-display font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-primary-600">
           Verifiche Strutturate
@@ -68,6 +110,15 @@ function App() {
       </div>
 
       <div className="max-w-4xl mx-auto space-y-10">
+
+        {/* ─── Badge Codice Verifica (dopo salvataggio) ─── */}
+        {savedCode && (
+          <div className="animate-in fade-in zoom-in-95 duration-500 flex items-center justify-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
+            <Check size={20} className="text-emerald-600" />
+            <span className="text-emerald-700 font-medium">Verifica salvata con codice:</span>
+            <span className="badge-code text-base">{savedCode}</span>
+          </div>
+        )}
 
         {/* ─── Sezione: Intestazione Verifica ─── */}
         <section className="animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
@@ -139,24 +190,53 @@ function App() {
           </div>
         </section>
 
-        {/* ─── Pulsanti PDF ─── */}
-        <div className="flex flex-col sm:flex-row gap-5 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 pb-20">
-          <button
-            onClick={() => generateTestPdf(testDoc.metadata, testDoc.questions, 'preview')}
-            disabled={testDoc.questions.length === 0}
-            className="btn-secondary flex-1 py-4 text-lg"
-          >
-            <Eye size={22} />
-            <span>Anteprima PDF</span>
-          </button>
-          <button
-            onClick={() => generateTestPdf(testDoc.metadata, testDoc.questions, 'download')}
-            disabled={testDoc.questions.length === 0}
-            className="btn-primary flex-1 py-4 text-lg"
-          >
-            <Download size={22} />
-            <span>Scarica PDF Finale</span>
-          </button>
+        {/* ─── Pulsanti Azione ─── */}
+        <div className="space-y-4 pt-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-500 pb-20">
+          {/* Riga 1: Salva + Nuova */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              onClick={handleSave}
+              disabled={testDoc.questions.length === 0 || saving}
+              className="btn-primary flex-1 py-4 text-lg"
+            >
+              {saving ? <Loader2 size={22} className="animate-spin" /> : <Save size={22} />}
+              <span>{saving ? 'Salvataggio...' : savedCode ? 'Salva Nuova Versione' : 'Salva nel Database'}</span>
+            </button>
+            {savedCode && (
+              <button onClick={handleNew} className="btn-secondary flex-1 py-4 text-lg">
+                <PlusCircle size={22} />
+                <span>Nuova Verifica</span>
+              </button>
+            )}
+          </div>
+
+          {/* Riga 2: PDF */}
+          <div className="flex flex-col sm:flex-row gap-4">
+            <button
+              onClick={() => generateTestPdf(testDoc.metadata, testDoc.questions, 'preview', savedCode || undefined)}
+              disabled={testDoc.questions.length === 0}
+              className="btn-secondary flex-1 py-4 text-lg"
+            >
+              <Eye size={22} />
+              <span>Anteprima PDF</span>
+            </button>
+            <button
+              onClick={() => generateTestPdf(testDoc.metadata, testDoc.questions, 'download', savedCode || undefined)}
+              disabled={testDoc.questions.length === 0}
+              className="btn-primary flex-1 py-4 text-lg"
+            >
+              <Download size={22} />
+              <span>PDF Studente</span>
+            </button>
+            <button
+              onClick={() => generateTeacherPdf(testDoc.metadata, testDoc.questions, savedCode || undefined)}
+              disabled={testDoc.questions.length === 0}
+              className="btn-secondary flex-1 py-4 text-lg border-purple-200 text-purple-700 hover:bg-purple-50 hover:border-purple-300"
+            >
+              <FileText size={22} />
+              <span>PDF Docente</span>
+            </button>
+          </div>
         </div>
 
       </div>

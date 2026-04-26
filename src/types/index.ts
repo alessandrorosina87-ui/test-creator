@@ -5,6 +5,7 @@ export interface BaseQuestion {
     type: QuestionType;
     text: string;
     images?: string[]; // base64 strings
+    punteggio: number; // punteggio assegnato alla domanda
 }
 
 export interface MultipleChoiceQuestion extends BaseQuestion {
@@ -26,6 +27,7 @@ export interface FillInBlankQuestion extends BaseQuestion {
 export interface OpenEndedQuestion extends BaseQuestion {
     type: 'OPEN_ENDED';
     lines: number; // how many lines to leave empty
+    teacherSolution?: string; // soluzione/risposta attesa dal docente
 }
 
 export type Question = MultipleChoiceQuestion | TrueFalseQuestion | FillInBlankQuestion | OpenEndedQuestion;
@@ -36,9 +38,40 @@ export interface TestMetadata {
     subject: string;
     date: string;
     teacherName: string;
+    note?: string; // note interne per il docente
 }
 
 export interface TestDocument {
     metadata: TestMetadata;
     questions: Question[];
+    codiceVerifica?: string; // VER-0001, VER-0002, ...
+}
+
+// ── Interfaccia per il record salvato su Firestore ──
+export interface VerificaDB {
+    codice_verifica: string;
+    titolo: string;
+    materia: string;
+    classe: string;
+    data_creazione: string; // ISO timestamp
+    data_verifica: string;
+    autore: string;
+    note: string;
+    domande: DomandaDB[];
+}
+
+export interface DomandaDB {
+    id: string;
+    tipo_domanda: QuestionType;
+    testo_domanda: string;
+    opzione_a?: string;
+    opzione_b?: string;
+    opzione_c?: string;
+    opzione_d?: string;
+    opzione_e?: string;
+    opzione_f?: string;
+    risposta_corretta: string;
+    punteggio: number;
+    soluzione_docente?: string;
+    immagini?: string[];
 }

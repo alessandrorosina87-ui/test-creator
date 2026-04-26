@@ -1,0 +1,12 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Verifiche collection
+    // - Create: anyone can create (teachers from the creator page)
+    // - Read/Update/Delete: authenticated users only (admin panel)
+    match /verifiche/{docId} {
+      allow create: if true;
+      allow read, update, delete: if request.auth != null;
+    }
+  }
+}
