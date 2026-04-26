@@ -1,6 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Permetti a tutti di leggere e scrivere il contatore per i codici progressivi
+    match /verifiche/_contatore {
+      allow read, write: if true;
+    }
+    
     // Verifiche collection
     // - Create: anyone can create (teachers from the creator page)
     // - Read/Update/Delete: authenticated users only (admin panel)

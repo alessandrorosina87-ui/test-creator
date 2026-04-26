@@ -43,20 +43,22 @@ export async function getNextCode(): Promise<string> {
 function questionsToDomande(questions: Question[]): DomandaDB[] {
   return questions.map((q) => {
     const base: DomandaDB = {
-      id: q.id,
+      id: q.id || crypto.randomUUID(),
       tipo_domanda: q.type,
-      testo_domanda: q.text,
+      testo_domanda: q.text || '',
       risposta_corretta: '',
       punteggio: q.punteggio || 1,
-      immagini: q.images,
+      immagini: q.images || [],
     };
 
     switch (q.type) {
       case 'MULTIPLE_CHOICE':
-        q.options.forEach((opt, i) => {
-          const key = `opzione_${String.fromCharCode(97 + i)}` as keyof DomandaDB;
-          (base as any)[key] = opt;
-        });
+        if (q.options) {
+          q.options.forEach((opt, i) => {
+            const key = `opzione_${String.fromCharCode(97 + i)}` as keyof DomandaDB;
+            (base as any)[key] = opt || '';
+          });
+        }
         base.risposta_corretta =
           q.correctAnswerIndex !== undefined
             ? String.fromCharCode(65 + q.correctAnswerIndex)
@@ -134,12 +136,12 @@ export async function salvaVerifica(
 ): Promise<void> {
   const verificaData: VerificaDB = {
     codice_verifica: codice,
-    titolo: sanitize(metadata.title),
-    materia: sanitize(metadata.subject),
-    classe: sanitize(metadata.class),
+    titolo: sanitize(metadata.title || ''),
+    materia: sanitize(metadata.subject || ''),
+    classe: sanitize(metadata.class || ''),
     data_creazione: new Date().toISOString(),
-    data_verifica: sanitize(metadata.date),
-    autore: sanitize(metadata.teacherName),
+    data_verifica: sanitize(metadata.date || ''),
+    autore: sanitize(metadata.teacherName || ''),
     note: sanitize(metadata.note || ''),
     domande: questionsToDomande(questions),
   };
@@ -210,11 +212,11 @@ export async function aggiornaVerifica(
 ): Promise<void> {
   const ref = doc(db, VERIFICHE_COLLECTION, codice);
   await updateDoc(ref, {
-    titolo: sanitize(metadata.title),
-    materia: sanitize(metadata.subject),
-    classe: sanitize(metadata.class),
-    data_verifica: sanitize(metadata.date),
-    autore: sanitize(metadata.teacherName),
+    titolo: sanitize(metadata.title || ''),
+    materia: sanitize(metadata.subject || ''),
+    classe: sanitize(metadata.class || ''),
+    data_verifica: sanitize(metadata.date || ''),
+    autore: sanitize(metadata.teacherName || ''),
     note: sanitize(metadata.note || ''),
     domande: questionsToDomande(questions),
   });
