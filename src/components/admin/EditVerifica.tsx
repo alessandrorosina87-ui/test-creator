@@ -45,7 +45,7 @@ export function EditVerifica({ params }: { params: Record<string, string> }) {
       await aggiornaVerifica(codice, metadata, questions);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
-    } catch (e) { console.error(e); alert('Errore nel salvataggio.'); }
+    } catch (e: any) { console.error(e); alert(`Errore nel salvataggio: ${e.message || JSON.stringify(e)}`); }
     finally { setSaving(false); }
   };
 
