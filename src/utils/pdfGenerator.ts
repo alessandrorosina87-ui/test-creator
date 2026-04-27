@@ -81,14 +81,18 @@ function renderHeader(doc: jsPDF, metadata: TestMetadata, codice?: string, isTea
     const metaLeft = [
         `Materia: ${metadata.subject || '____________________'}`,
         `Classe: ${metadata.class || '____________________'}`,
+        `Codice: ${codice || '____________________'}`,
     ];
     const metaRight = [
         `Docente: ${metadata.teacherName || '____________________'}`,
         `Data: ${metadata.date || '____________________'}`,
+        '', // vuoto per bilanciare le tre righe
     ];
     metaLeft.forEach((txt, i) => {
         doc.text(txt, ML, y);
-        doc.text(metaRight[i], PAGE_W / 2 + 5, y);
+        if (metaRight[i]) {
+            doc.text(metaRight[i], PAGE_W / 2 + 5, y);
+        }
         y += 6;
     });
     y += 4;

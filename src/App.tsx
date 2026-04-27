@@ -65,9 +65,9 @@ function App() {
       await salvaVerifica(testDoc.metadata, testDoc.questions, codice);
       setSavedCode(codice);
       setTestDoc({ ...testDoc, codiceVerifica: codice });
-    } catch (e) {
+    } catch (e: any) {
       console.error('Errore salvataggio:', e);
-      alert('Errore nel salvataggio. Riprova.');
+      alert(`Errore nel salvataggio: ${e.message || JSON.stringify(e)}`);
     } finally {
       setSaving(false);
     }
@@ -113,10 +113,33 @@ function App() {
 
         {/* ─── Badge Codice Verifica (dopo salvataggio) ─── */}
         {savedCode && (
-          <div className="animate-in fade-in zoom-in-95 duration-500 flex items-center justify-center gap-3 p-4 bg-emerald-50 border border-emerald-200 rounded-2xl">
-            <Check size={20} className="text-emerald-600" />
-            <span className="text-emerald-700 font-medium">Verifica salvata con codice:</span>
-            <span className="badge-code text-base">{savedCode}</span>
+          <div className="animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center gap-4 p-6 bg-emerald-50 border-2 border-emerald-200 rounded-2xl">
+            <div className="flex items-center gap-3">
+              <Check size={28} className="text-emerald-600" />
+              <span className="text-emerald-800 font-bold text-xl">Verifica salvata con successo - Codice:</span>
+              <span className="px-3 py-1 bg-white text-emerald-700 border border-emerald-300 rounded-lg font-mono font-bold text-xl">{savedCode}</span>
+            </div>
+            
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-2">
+              <button
+                onClick={() => navigate('/admin')}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition-colors shadow-sm"
+              >
+                <Shield size={18} /> Apri Archivio
+              </button>
+              <button
+                onClick={() => generateTestPdf(testDoc.metadata, testDoc.questions, 'download', savedCode)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-white hover:bg-slate-50 text-emerald-700 border border-emerald-200 rounded-xl font-bold transition-colors shadow-sm"
+              >
+                <Download size={18} /> Scarica PDF
+              </button>
+              <button
+                onClick={handleNew}
+                className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-bold transition-colors shadow-sm"
+              >
+                <PlusCircle size={18} /> Nuova Verifica
+              </button>
+            </div>
           </div>
         )}
 
