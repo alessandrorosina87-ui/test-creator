@@ -156,7 +156,10 @@ export function LandingPage() {
             <button onClick={() => navigate('/login')} className="hover:text-primary-600 transition-colors">Login</button>
             <button onClick={() => navigate('/register')} className="hover:text-primary-600 transition-colors">Registrazione</button>
           </div>
-          <p className="text-sm text-slate-400">© 2026 VerifichePro. Tutti i diritti riservati.</p>
+          <div className="flex flex-col items-center md:items-end">
+            <p className="text-sm text-slate-400">© 2026 VerifichePro. Tutti i diritti riservati.</p>
+            <p className="text-xs font-mono text-slate-300 dark:text-slate-600 mt-1">Versione live: 1.0.1</p>
+          </div>
         </div>
       </footer>
     </div>
