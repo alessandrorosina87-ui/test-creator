@@ -3,7 +3,9 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
 import { RouterProvider, Routes, useRouter } from './Router.tsx'
-import { AdminLogin } from './components/admin/AdminLogin.tsx'
+import { LandingPage } from './components/LandingPage.tsx'
+import { LoginPage } from './components/auth/LoginPage.tsx'
+import { RegisterPage } from './components/auth/RegisterPage.tsx'
 import { AdminDashboard } from './components/admin/AdminDashboard.tsx'
 import { ArchivioVerifiche } from './components/admin/ArchivioVerifiche.tsx'
 import { VerificaDetail } from './components/admin/VerificaDetail.tsx'
@@ -31,7 +33,7 @@ function ProtectedRoute({ component: Component, params }: { component: React.Com
 
   if (!user) {
     // Redirect to login
-    navigate('/admin');
+    navigate('/login');
     return null;
   }
 
@@ -56,8 +58,11 @@ function AppRoutes() {
   return (
     <Routes
       routes={[
-        { pattern: '/', component: App },
-        { pattern: '/admin', component: AdminLogin },
+        { pattern: '/', component: LandingPage },
+        { pattern: '/creator', component: App },
+        { pattern: '/login', component: LoginPage },
+        { pattern: '/register', component: RegisterPage },
+        { pattern: '/admin', component: LoginPage }, // Fallback for old /admin route
         { pattern: '/admin/dashboard', component: ProtectedDashboard },
         { pattern: '/admin/archivio', component: ProtectedArchivio },
         { pattern: '/admin/verifica/:codice', component: ProtectedDetail },

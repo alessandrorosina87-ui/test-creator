@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TestHeader } from './components/TestHeader';
 import { QuestionEditor } from './components/QuestionEditor';
 import type { TestDocument, Question } from './types';
-import { PlusCircle, Eye, Download, Save, FileText, Shield, Check, Loader2 } from 'lucide-react';
+import { PlusCircle, Eye, Download, Save, FileText, Shield, Check, Loader2, LogOut, LayoutDashboard } from 'lucide-react';
 import { generateTestPdf, generateTeacherPdf } from './utils/pdfGenerator';
 import { salvaVerifica, getNextCode } from './services/verificheService';
+import { onAuthStateChanged, logout } from './services/authService';
 import { useRouter } from './Router';
+import { AuthModal } from './components/AuthModal';
+import type { User } from 'firebase/auth';
 
 function App() {
   const { navigate } = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [testDoc, setTestDoc] = useState<TestDocument>({
     metadata: {
       title: '',
@@ -22,6 +27,11 @@ function App() {
   });
   const [saving, setSaving] = useState(false);
   const [savedCode, setSavedCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged((u) => setUser(u));
+    return unsub;
+  }, []);
 
   const addQuestion = () => {
     const newQuestion: Question = {
@@ -59,6 +69,12 @@ function App() {
   // ── Salva su Firestore e genera codice ──
   const handleSave = async () => {
     if (testDoc.questions.length === 0) return;
+    
+    if (!user) {
+      setShowAuthModal(true);
+      return;
+    }
+
     setSaving(true);
     try {
       const codice = await getNextCode();
@@ -82,23 +98,68 @@ function App() {
     setSavedCode(null);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
   return (
     <div className="min-h-screen py-12 px-4 selection:bg-indigo-100">
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
       
       {/* ─── Hero / Header ─── */}
       <div className="max-w-4xl mx-auto mb-12 text-center animate-in fade-in slide-in-from-top-4 duration-1000">
+        <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200/50">
+          <button
+            onClick={() => navigate('/')}
+            className="text-slate-500 hover:text-primary-600 font-bold text-sm transition-colors"
+          >
+            &larr; Torna alla Home
+          </button>
+          
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                <span className="text-sm text-slate-500 hidden sm:inline-block">
+                  Ciao, {user.displayName || user.email}
+                </span>
+                <button
+                  onClick={() => navigate('/admin/dashboard')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-50 text-primary-700 text-xs font-bold hover:bg-primary-100 transition-colors"
+                >
+                  <LayoutDashboard size={14} /> Dashboard
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 text-xs font-bold hover:bg-slate-200 transition-colors"
+                >
+                  <LogOut size={14} /> Esci
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => navigate('/login')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 text-xs font-bold hover:bg-slate-100 transition-colors"
+                >
+                  Accedi
+                </button>
+                <button
+                  onClick={() => navigate('/register')}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary-600 text-white text-xs font-bold hover:bg-primary-700 transition-colors shadow-sm"
+                >
+                  Registrati
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
         <div className="flex items-center justify-center gap-3 mb-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-100 text-primary-700 text-xs font-bold tracking-wider uppercase">
             <PlusCircle size={14} />
             AI Powered Creator
           </div>
-          <button
-            onClick={() => navigate('/admin')}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold tracking-wider uppercase hover:bg-slate-200 transition-colors"
-          >
-            <Shield size={14} />
-            Admin
-          </button>
         </div>
         <h1 className="text-5xl md:text-6xl font-display font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-primary-600">
           Verifiche Strutturate

@@ -7,11 +7,12 @@ import {
   signOut,
   onAuthStateChanged as firebaseOnAuthStateChanged,
   createUserWithEmailAndPassword,
+  updateProfile,
   type User,
 } from 'firebase/auth';
 import { auth } from '../firebase';
 
-// ── Login admin ──
+// ── Login utente ──
 export async function login(email: string, password: string): Promise<User> {
   const cred = await signInWithEmailAndPassword(auth, email, password);
   return cred.user;
@@ -27,9 +28,10 @@ export function onAuthStateChanged(callback: (user: User | null) => void): () =>
   return firebaseOnAuthStateChanged(auth, callback);
 }
 
-// ── Registrazione primo admin (usata una volta) ──
-export async function registerAdmin(email: string, password: string): Promise<User> {
+// ── Registrazione nuovo utente ──
+export async function registerWithEmail(email: string, password: string, name: string): Promise<User> {
   const cred = await createUserWithEmailAndPassword(auth, email, password);
+  await updateProfile(cred.user, { displayName: name });
   return cred.user;
 }
 
