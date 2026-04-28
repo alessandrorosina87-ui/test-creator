@@ -16,6 +16,7 @@ export function EditVerifica({ params }: { params: Record<string, string> }) {
   const [metadata, setMetadata] = useState<TestMetadata>({ title: '', class: '', subject: '', date: '', teacherName: '', note: '' });
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -34,8 +35,17 @@ export function EditVerifica({ params }: { params: Record<string, string> }) {
           note: data.verifica.note,
         });
         setQuestions(data.questions);
+      } else {
+        setError('Verifica non trovata.');
       }
-    } catch (e) { console.error(e); }
+    } catch (e: any) { 
+      console.error(e);
+      if (e.code === 'permission-denied') {
+        setError('Accesso negato. Non hai i permessi per visualizzare questa verifica.');
+      } else {
+        setError('Errore durante il caricamento della verifica.');
+      }
+    }
     finally { setLoading(false); }
   };
 
@@ -61,6 +71,13 @@ export function EditVerifica({ params }: { params: Record<string, string> }) {
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="w-8 h-8 border-3 border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+    </div>
+  );
+
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center flex-col gap-4">
+      <p className="text-red-500 font-bold text-lg">{error}</p>
+      <button onClick={() => navigate('/admin/archivio')} className="btn-secondary">Torna all'archivio</button>
     </div>
   );
 

@@ -13,9 +13,9 @@ import {
   deleteDoc,
   runTransaction,
   query,
-  orderBy,
+  where,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import type { Question, TestMetadata, VerificaDB, DomandaDB, TestDocument } from '../types';
 
 const VERIFICHE_COLLECTION = 'verifiche';
@@ -134,6 +134,9 @@ export async function salvaVerifica(
   questions: Question[],
   codice: string,
 ): Promise<void> {
+  const userId = auth.currentUser?.uid;
+  if (!userId) throw new Error('Utente non autenticato');
+
   const verificaData: VerificaDB = {
     codice_verifica: codice,
     titolo: sanitize(metadata.title || ''),
@@ -143,17 +146,20 @@ export async function salvaVerifica(
     data_verifica: sanitize(metadata.date || ''),
     autore: sanitize(metadata.teacherName || ''),
     note: sanitize(metadata.note || ''),
+    user_id: userId,
     domande: questionsToDomande(questions),
   };
 
   await setDoc(doc(db, VERIFICHE_COLLECTION, codice), verificaData);
 }
 
-// ── Ottieni tutte le verifiche (ordinamento) ──
 export async function getVerifiche(): Promise<VerificaDB[]> {
-  // Prendi tutti e filtra manualmente il contatore
+  const userId = auth.currentUser?.uid;
+  if (!userId) return [];
+
+  // Filtriamo per utente (questo non richiederà indice composito in quanto l'ordinamento avviene lato client)
   const snapshot = await getDocs(
-    query(collection(db, VERIFICHE_COLLECTION), orderBy('codice_verifica'))
+    query(collection(db, VERIFICHE_COLLECTION), where('user_id', '==', userId))
   );
   
   const risultati: VerificaDB[] = [];
@@ -163,7 +169,9 @@ export async function getVerifiche(): Promise<VerificaDB[]> {
       risultati.push(data as VerificaDB);
     }
   });
-  return risultati;
+  
+  // Ordina per codice verifica decrescente/crescente o data. Ordiniamo per codice crescente (originalmente era orderBy('codice_verifica'))
+  return risultati.sort((a, b) => a.codice_verifica.localeCompare(b.codice_verifica));
 }
 
 // ── Ricerca verifiche con filtri ──
@@ -204,12 +212,14 @@ export async function getVerifica(codice: string): Promise<{ verifica: VerificaD
   };
 }
 
-// ── Aggiorna verifica esistente ──
 export async function aggiornaVerifica(
   codice: string,
   metadata: TestMetadata,
   questions: Question[],
 ): Promise<void> {
+  const userId = auth.currentUser?.uid;
+  if (!userId) throw new Error('Utente non autenticato');
+
   const ref = doc(db, VERIFICHE_COLLECTION, codice);
   await updateDoc(ref, {
     titolo: sanitize(metadata.title || ''),
@@ -218,6 +228,7 @@ export async function aggiornaVerifica(
     data_verifica: sanitize(metadata.date || ''),
     autore: sanitize(metadata.teacherName || ''),
     note: sanitize(metadata.note || ''),
+    user_id: userId,
     domande: questionsToDomande(questions),
   });
 }
@@ -227,8 +238,10 @@ export async function eliminaVerifica(codice: string): Promise<void> {
   await deleteDoc(doc(db, VERIFICHE_COLLECTION, codice));
 }
 
-// ── Duplica verifica con nuovo codice ──
 export async function duplicaVerifica(codiceOrigine: string): Promise<string> {
+  const userId = auth.currentUser?.uid;
+  if (!userId) throw new Error('Utente non autenticato');
+
   const originale = await getVerifica(codiceOrigine);
   if (!originale) throw new Error('Verifica originale non trovata');
 
@@ -240,6 +253,7 @@ export async function duplicaVerifica(codiceOrigine: string): Promise<string> {
     codice_verifica: nuovoCodice,
     titolo: `${verifica.titolo} (copia)`,
     data_creazione: new Date().toISOString(),
+    user_id: userId,
     domande: verifica.domande.map((d) => ({ ...d, id: crypto.randomUUID() })),
   };
 

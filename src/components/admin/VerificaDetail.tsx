@@ -15,6 +15,7 @@ export function VerificaDetail({ params }: { params: Record<string, string> }) {
   const [verifica, setVerifica] = useState<VerificaDB | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (codice) loadVerifica();
@@ -23,8 +24,20 @@ export function VerificaDetail({ params }: { params: Record<string, string> }) {
   const loadVerifica = async () => {
     try {
       const data = await getVerifica(codice);
-      if (data) { setVerifica(data.verifica); setQuestions(data.questions); }
-    } catch (e) { console.error(e); }
+      if (data) { 
+        setVerifica(data.verifica); 
+        setQuestions(data.questions); 
+      } else {
+        setError('Verifica non trovata.');
+      }
+    } catch (e: any) { 
+      console.error(e);
+      if (e.code === 'permission-denied') {
+        setError('Accesso negato. Non hai i permessi per visualizzare questa verifica.');
+      } else {
+        setError('Errore durante il caricamento della verifica.');
+      }
+    }
     finally { setLoading(false); }
   };
 
@@ -34,9 +47,9 @@ export function VerificaDetail({ params }: { params: Record<string, string> }) {
     </div>
   );
 
-  if (!verifica) return (
+  if (error || !verifica) return (
     <div className="min-h-screen flex items-center justify-center flex-col gap-4">
-      <p className="text-slate-400 text-lg">Verifica non trovata.</p>
+      <p className="text-red-500 font-bold text-lg">{error || 'Verifica non trovata.'}</p>
       <button onClick={() => navigate('/admin/archivio')} className="btn-secondary">Torna all'archivio</button>
     </div>
   );

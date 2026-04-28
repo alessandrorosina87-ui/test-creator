@@ -50,8 +50,8 @@ export function AdminDashboard() {
               <LayoutDashboard size={20} />
             </div>
             <div>
-              <h1 className="text-2xl font-display font-bold dark:text-white">Dashboard Admin</h1>
-              <p className="text-slate-400 text-xs font-medium">Gestione verifiche strutturate</p>
+              <h1 className="text-2xl font-display font-bold dark:text-white">Le mie verifiche</h1>
+              <p className="text-slate-400 text-xs font-medium">Gestione verifiche personali</p>
             </div>
           </div>
           <div className="flex items-center gap-2">

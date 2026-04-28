@@ -45,6 +45,7 @@ export interface TestDocument {
     metadata: TestMetadata;
     questions: Question[];
     codiceVerifica?: string; // VER-0001, VER-0002, ...
+    user_id?: string;
 }
 
 // ── Interfaccia per il record salvato su Firestore ──
@@ -57,6 +58,7 @@ export interface VerificaDB {
     data_verifica: string;
     autore: string;
     note: string;
+    user_id?: string;
     domande: DomandaDB[];
 }
 
