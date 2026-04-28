@@ -1,8 +1,21 @@
-import { Check, BookOpen, Layers, Shield, FileText, ArrowRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Check, BookOpen, Layers, Shield, FileText, ArrowRight, LayoutDashboard, LogOut } from 'lucide-react';
 import { useRouter } from '../Router';
+import { onAuthStateChanged, logout } from '../services/authService';
+import type { User } from 'firebase/auth';
 
 export function LandingPage() {
   const { navigate } = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged((u) => setUser(u));
+    return unsub;
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-900 font-sans selection:bg-primary-100">
@@ -19,19 +32,46 @@ export function LandingPage() {
             
             <div className="hidden md:flex items-center gap-6">
               <a href="#come-funziona" className="text-sm font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 transition-colors">Come funziona</a>
-              <a href="#prezzi" className="text-sm font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 transition-colors">Prezzi</a>
-              <button onClick={() => navigate('/login')} className="text-sm font-bold text-slate-700 hover:text-primary-600 dark:text-white transition-colors">
-                Accedi
-              </button>
-              <button onClick={() => navigate('/register')} className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-colors shadow-sm">
-                Registrati Gratis
-              </button>
+              <button onClick={() => navigate('/privacy')} className="text-sm font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 transition-colors">Privacy</button>
+              <button onClick={() => navigate('/contatti')} className="text-sm font-medium text-slate-600 hover:text-primary-600 dark:text-slate-300 transition-colors">Contatti</button>
+              
+              {user ? (
+                <>
+                  <button onClick={() => navigate('/admin/dashboard')} className="text-sm font-bold text-slate-700 hover:text-primary-600 dark:text-white transition-colors flex items-center gap-2">
+                    <LayoutDashboard size={16} /> Dashboard
+                  </button>
+                  <button onClick={handleLogout} className="text-sm font-bold text-slate-500 hover:text-red-500 transition-colors flex items-center gap-2">
+                    <LogOut size={16} /> Esci
+                  </button>
+                  <button onClick={() => navigate('/creator')} className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-colors shadow-sm">
+                    Crea Verifica
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button onClick={() => navigate('/login')} className="text-sm font-bold text-slate-700 hover:text-primary-600 dark:text-white transition-colors">
+                    Accedi
+                  </button>
+                  <button onClick={() => navigate('/register')} className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-colors shadow-sm">
+                    Registrati Gratis
+                  </button>
+                </>
+              )}
             </div>
 
             {/* Mobile menu button could go here */}
             <div className="md:hidden flex items-center gap-4">
-               <button onClick={() => navigate('/login')} className="text-sm font-bold text-slate-700 dark:text-white">Accedi</button>
-               <button onClick={() => navigate('/creator')} className="text-sm font-bold bg-primary-600 text-white px-4 py-2 rounded-xl">Crea</button>
+               {user ? (
+                 <>
+                   <button onClick={() => navigate('/admin/dashboard')} className="text-sm font-bold text-slate-700 dark:text-white"><LayoutDashboard size={18} /></button>
+                   <button onClick={() => navigate('/creator')} className="text-sm font-bold bg-primary-600 text-white px-4 py-2 rounded-xl">Crea</button>
+                 </>
+               ) : (
+                 <>
+                   <button onClick={() => navigate('/login')} className="text-sm font-bold text-slate-700 dark:text-white">Accedi</button>
+                   <button onClick={() => navigate('/creator')} className="text-sm font-bold bg-primary-600 text-white px-4 py-2 rounded-xl">Crea</button>
+                 </>
+               )}
             </div>
           </div>
         </div>
@@ -54,9 +94,15 @@ export function LandingPage() {
             <button onClick={() => navigate('/creator')} className="w-full sm:w-auto px-8 py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 rounded-2xl font-bold text-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 flex items-center justify-center gap-2">
               Crea Gratis Ora <ArrowRight size={20} />
             </button>
-            <button onClick={() => navigate('/login')} className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm flex items-center justify-center">
-              Accedi al tuo account
-            </button>
+            {user ? (
+              <button onClick={() => navigate('/admin/dashboard')} className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm flex items-center justify-center">
+                Vai alla Dashboard
+              </button>
+            ) : (
+              <button onClick={() => navigate('/login')} className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm flex items-center justify-center">
+                Accedi al tuo account
+              </button>
+            )}
           </div>
         </div>
       </section>
@@ -151,10 +197,18 @@ export function LandingPage() {
             <span className="font-display font-bold text-xl dark:text-white">Verifiche<span className="text-primary-600">Pro</span></span>
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500 dark:text-slate-400">
-            <button onClick={() => navigate('/')} className="hover:text-primary-600 transition-colors">Privacy Policy</button>
-            <button onClick={() => navigate('/')} className="hover:text-primary-600 transition-colors">Contatti</button>
-            <button onClick={() => navigate('/login')} className="hover:text-primary-600 transition-colors">Login</button>
-            <button onClick={() => navigate('/register')} className="hover:text-primary-600 transition-colors">Registrazione</button>
+            <button onClick={() => navigate('/')} className="hover:text-primary-600 transition-colors">Home</button>
+            <button onClick={() => navigate('/creator')} className="hover:text-primary-600 transition-colors">Crea Verifica</button>
+            <button onClick={() => navigate('/privacy')} className="hover:text-primary-600 transition-colors">Privacy Policy</button>
+            <button onClick={() => navigate('/contatti')} className="hover:text-primary-600 transition-colors">Contatti</button>
+            {user ? (
+              <button onClick={() => navigate('/admin/dashboard')} className="hover:text-primary-600 transition-colors font-bold">Dashboard</button>
+            ) : (
+              <>
+                <button onClick={() => navigate('/login')} className="hover:text-primary-600 transition-colors">Login</button>
+                <button onClick={() => navigate('/register')} className="hover:text-primary-600 transition-colors">Registrazione</button>
+              </>
+            )}
           </div>
           <div className="flex flex-col items-center md:items-end">
             <p className="text-sm text-slate-400">© 2026 VerifichePro. Tutti i diritti riservati.</p>

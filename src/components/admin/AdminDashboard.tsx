@@ -3,10 +3,10 @@
  * Dashboard admin con statistiche, navigazione e toggle dark mode.
  */
 import { useState, useEffect } from 'react';
-import { LayoutDashboard, FileText, Plus, LogOut, Moon, Sun, TrendingUp, Calendar, BookOpen, Hash, Shield } from 'lucide-react';
+import { LayoutDashboard, FileText, Plus, LogOut, Moon, Sun, TrendingUp, Calendar, BookOpen, Hash, Shield, Trash2 } from 'lucide-react';
 import { useRouter } from '../../Router';
 import { logout } from '../../services/authService';
-import { getVerifiche } from '../../services/verificheService';
+import { getVerifiche, eliminaVerifica } from '../../services/verificheService';
 import type { VerificaDB } from '../../types';
 
 export function AdminDashboard() {
@@ -27,6 +27,20 @@ export function AdminDashboard() {
   };
 
   const handleLogout = async () => { await logout(); navigate('/admin'); };
+
+  const handleElimina = async (codice: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (window.confirm("Sei sicuro di voler eliminare questa verifica?")) {
+      try {
+        await eliminaVerifica(codice);
+        await loadStats();
+        alert('Verifica eliminata correttamente');
+      } catch (err) {
+        console.error(err);
+        alert('Errore durante l\'eliminazione della verifica');
+      }
+    }
+  };
 
   const totale = verifiche.length;
   const now = new Date();
@@ -84,7 +98,7 @@ export function AdminDashboard() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-10">
-          <button onClick={() => navigate('/')} className="premium-card dark:bg-slate-800 dark:border-slate-700 p-6 text-left group hover:border-primary-300 dark:hover:border-primary-600">
+          <button onClick={() => navigate('/creator')} className="premium-card dark:bg-slate-800 dark:border-slate-700 p-6 text-left group hover:border-primary-300 dark:hover:border-primary-600">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center text-primary-600 group-hover:scale-110 transition-transform"><Plus size={24} /></div>
               <div><h3 className="font-display font-bold text-lg dark:text-white">Crea Nuova Verifica</h3><p className="text-slate-400 text-sm">Vai al Creator per generare un nuovo test</p></div>
@@ -107,13 +121,18 @@ export function AdminDashboard() {
           ) : (
             <div className="space-y-2">
               {verifiche.slice(0, 5).map(v => (
-                <button key={v.codice_verifica} onClick={() => navigate(`/admin/verifica/${v.codice_verifica}`)} className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group text-left">
-                  <div className="flex items-center gap-3">
-                    <span className="badge-code">{v.codice_verifica}</span>
-                    <div><p className="font-bold text-sm dark:text-white">{v.titolo}</p><p className="text-xs text-slate-400">{v.materia} — {v.classe}</p></div>
-                  </div>
-                  <span className="text-xs text-slate-400">{new Date(v.data_creazione).toLocaleDateString('it-IT')}</span>
-                </button>
+                <div key={v.codice_verifica} className="flex items-center gap-2">
+                  <button onClick={() => navigate(`/admin/verifica/${v.codice_verifica}`)} className="flex-1 flex items-center justify-between p-3 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors group text-left border border-transparent hover:border-slate-200 dark:hover:border-slate-600">
+                    <div className="flex items-center gap-3">
+                      <span className="badge-code">{v.codice_verifica}</span>
+                      <div><p className="font-bold text-sm dark:text-white">{v.titolo}</p><p className="text-xs text-slate-400">{v.materia} — {v.classe}</p></div>
+                    </div>
+                    <span className="text-xs text-slate-400 hidden sm:block">{new Date(v.data_creazione).toLocaleDateString('it-IT')}</span>
+                  </button>
+                  <button onClick={(e) => handleElimina(v.codice_verifica, e)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors" title="Elimina Verifica">
+                    <Trash2 size={18} />
+                  </button>
+                </div>
               ))}
             </div>
           )}

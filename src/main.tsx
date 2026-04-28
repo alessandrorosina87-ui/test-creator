@@ -10,6 +10,8 @@ import { AdminDashboard } from './components/admin/AdminDashboard.tsx'
 import { ArchivioVerifiche } from './components/admin/ArchivioVerifiche.tsx'
 import { VerificaDetail } from './components/admin/VerificaDetail.tsx'
 import { EditVerifica } from './components/admin/EditVerifica.tsx'
+import { PrivacyPolicy } from './components/PrivacyPolicy.tsx'
+import { Contatti } from './components/Contatti.tsx'
 import { onAuthStateChanged } from './services/authService.ts'
 import type { User } from 'firebase/auth'
 
@@ -62,6 +64,8 @@ function AppRoutes() {
         { pattern: '/creator', component: App },
         { pattern: '/login', component: LoginPage },
         { pattern: '/register', component: RegisterPage },
+        { pattern: '/privacy', component: PrivacyPolicy },
+        { pattern: '/contatti', component: Contatti },
         { pattern: '/admin', component: LoginPage }, // Fallback for old /admin route
         { pattern: '/admin/dashboard', component: ProtectedDashboard },
         { pattern: '/admin/archivio', component: ProtectedArchivio },
