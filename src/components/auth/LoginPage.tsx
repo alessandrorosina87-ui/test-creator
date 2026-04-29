@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { LogIn, ArrowLeft, Eye, EyeOff, BookOpen } from 'lucide-react';
 import { login } from '../../services/authService';
+import { isCurrentUserAdmin } from '../../services/adminService';
 import { useRouter } from '../../Router';
 
 export function LoginPage() {
@@ -18,7 +19,13 @@ export function LoginPage() {
 
     try {
       await login(email, password);
-      navigate('/admin/dashboard');
+      // Controlla se l'utente è admin e redireziona di conseguenza
+      const admin = await isCurrentUserAdmin();
+      if (admin) {
+        navigate('/superadmin');
+      } else {
+        navigate('/admin/dashboard');
+      }
     } catch (err: any) {
       const code = err?.code || '';
       if (code === 'auth/user-not-found' || code === 'auth/invalid-credential') {
@@ -116,14 +123,8 @@ export function LoginPage() {
             </button>
           </form>
           
-          <div className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700 pt-6">
-            Non hai un account?{' '}
-            <button 
-              onClick={() => navigate('/register')}
-              className="text-primary-600 dark:text-primary-400 font-bold hover:underline"
-            >
-              Registrati gratis
-            </button>
+          <div className="mt-8 text-center text-sm text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-700 pt-6">
+            Gli account vengono creati dall'amministratore della piattaforma.
           </div>
 
         </div>

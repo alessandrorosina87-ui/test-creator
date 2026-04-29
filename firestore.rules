@@ -1,22 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // ── Helper: verifica se l'utente è admin ──
+    function isAdmin() {
+      return request.auth != null && request.auth.token.admin == true;
+    }
+
     // Permetti a tutti di leggere e scrivere il contatore per i codici progressivi
     match /verifiche/_contatore {
       allow read, write: if true;
     }
     
     // Verifiche collection
-    // - Create: authenticated user must set user_id to their own uid
-    // - Read/Update/Delete: only owner can access, or if user_id is missing (legacy) allow first access/claim
+    // - Admin: accesso completo in lettura a tutte le verifiche
+    // - Utente normale: solo le proprie
     match /verifiche/{docId} {
       allow create: if request.auth != null && request.resource.data.user_id == request.auth.uid;
-      allow read: if request.auth != null && (!("user_id" in resource.data) || resource.data.user_id == request.auth.uid);
+      allow read: if isAdmin() || (request.auth != null && (
+        !("user_id" in resource.data) || resource.data.user_id == request.auth.uid
+      ));
       allow update: if request.auth != null && (
         (!("user_id" in resource.data) && request.resource.data.user_id == request.auth.uid) || 
         resource.data.user_id == request.auth.uid
       );
-      allow delete: if request.auth != null && resource.data.user_id == request.auth.uid;
+      allow delete: if request.auth != null && (isAdmin() || resource.data.user_id == request.auth.uid);
+    }
+
+    // Profili utente
+    // - Admin: lettura/scrittura completa su tutti i profili
+    // - Utente normale: può leggere e aggiornare solo il proprio profilo
+    match /users/{userId} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow delete: if isAdmin();
     }
   }
 }

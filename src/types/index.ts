@@ -77,3 +77,15 @@ export interface DomandaDB {
     soluzione_docente?: string;
     immagini?: string[];
 }
+
+// ── Profilo utente salvato su Firestore ──
+export interface UserProfile {
+    uid: string;
+    displayName: string;
+    email: string;
+    role: 'admin' | 'user';
+    status: 'active' | 'blocked';
+    created_at: string;
+    last_login: string;
+    verifiche_count: number;
+}

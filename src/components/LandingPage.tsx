@@ -2,14 +2,24 @@ import { useState, useEffect } from 'react';
 import { Check, BookOpen, Layers, Shield, FileText, ArrowRight, LayoutDashboard, LogOut } from 'lucide-react';
 import { useRouter } from '../Router';
 import { onAuthStateChanged, logout } from '../services/authService';
+import { isCurrentUserAdmin } from '../services/adminService';
 import type { User } from 'firebase/auth';
 
 export function LandingPage() {
   const { navigate } = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged((u) => setUser(u));
+    const unsub = onAuthStateChanged(async (u) => {
+      setUser(u);
+      if (u) {
+        const admin = await isCurrentUserAdmin();
+        setIsAdmin(admin);
+      } else {
+        setIsAdmin(false);
+      }
+    });
     return unsub;
   }, []);
 
@@ -37,6 +47,11 @@ export function LandingPage() {
               
               {user ? (
                 <>
+                  {isAdmin && (
+                    <button onClick={() => navigate('/superadmin')} className="text-sm font-bold text-red-600 hover:text-red-700 dark:text-red-400 transition-colors flex items-center gap-1.5">
+                      <Shield size={14} /> Admin
+                    </button>
+                  )}
                   <button onClick={() => navigate('/admin/dashboard')} className="text-sm font-bold text-slate-700 hover:text-primary-600 dark:text-white transition-colors flex items-center gap-2">
                     <LayoutDashboard size={16} /> Dashboard
                   </button>
@@ -52,8 +67,8 @@ export function LandingPage() {
                   <button onClick={() => navigate('/login')} className="text-sm font-bold text-slate-700 hover:text-primary-600 dark:text-white transition-colors">
                     Accedi
                   </button>
-                  <button onClick={() => navigate('/register')} className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-colors shadow-sm">
-                    Registrati Gratis
+                  <button onClick={() => navigate('/creator')} className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-colors shadow-sm">
+                    Prova Gratis
                   </button>
                 </>
               )}
@@ -63,6 +78,9 @@ export function LandingPage() {
             <div className="md:hidden flex items-center gap-4">
                {user ? (
                  <>
+                   {isAdmin && (
+                     <button onClick={() => navigate('/superadmin')} className="text-sm font-bold text-red-500"><Shield size={18} /></button>
+                   )}
                    <button onClick={() => navigate('/admin/dashboard')} className="text-sm font-bold text-slate-700 dark:text-white"><LayoutDashboard size={18} /></button>
                    <button onClick={() => navigate('/creator')} className="text-sm font-bold bg-primary-600 text-white px-4 py-2 rounded-xl">Crea</button>
                  </>
@@ -135,18 +153,18 @@ export function LandingPage() {
                 <Shield size={28} />
               </div>
               <h3 className="text-xl font-bold mb-3 dark:text-white">3. Salva nel cloud</h3>
-              <p className="text-slate-600 dark:text-slate-400">Registrati per salvare le tue verifiche, ricercarle tramite codice e modificarle in futuro.</p>
+              <p className="text-slate-600 dark:text-slate-400">Accedi con le credenziali fornite dall'amministratore per salvare le verifiche, ricercarle e modificarle.</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── Differenza Ospite / Registrato ─── */}
+      {/* ─── Vantaggi ─── */}
       <section id="prezzi" className="py-24 bg-white dark:bg-slate-900">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white mb-4">Scegli il tuo piano</h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400">Il creatore base è sempre gratuito. Registrati per sbloccare il cloud.</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-slate-900 dark:text-white mb-4">Funzionalità della piattaforma</h2>
+            <p className="text-lg text-slate-600 dark:text-slate-400">Il creatore base è gratuito per tutti. Accedi per sbloccare il cloud.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -162,14 +180,14 @@ export function LandingPage() {
                 <li className="flex items-center gap-3 text-slate-400"><div className="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xs">X</div> <span>Storico verifiche</span></li>
               </ul>
               <button onClick={() => navigate('/creator')} className="w-full py-3 rounded-xl font-bold border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors dark:text-white">
-                Prova Senza Registrazione
+                Prova Senza Account
               </button>
             </div>
 
             {/* Premium Card */}
             <div className="p-8 rounded-3xl border-2 border-primary-500 bg-white dark:bg-slate-800 relative shadow-2xl shadow-primary-500/10 scale-105 z-10">
               <div className="absolute top-0 right-8 transform -translate-y-1/2 bg-primary-500 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">
-                Consigliato
+                Completo
               </div>
               <h3 className="text-2xl font-bold mb-2 dark:text-white">Utente Registrato</h3>
               <p className="text-slate-500 mb-6">Tutto il potenziale sbloccato per i docenti.</p>
@@ -181,8 +199,8 @@ export function LandingPage() {
                 <li className="flex items-center gap-3"><Check size={20} className="text-primary-500" /> <span className="font-medium dark:text-slate-200">Ricerca verifiche per codice</span></li>
                 <li className="flex items-center gap-3"><Check size={20} className="text-primary-500" /> <span className="font-medium dark:text-slate-200">PDF Docente (con soluzioni)</span></li>
               </ul>
-              <button onClick={() => navigate('/register')} className="w-full py-3 rounded-xl font-bold bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-md">
-                Registrati Ora
+              <button onClick={() => navigate('/login')} className="w-full py-3 rounded-xl font-bold bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-md">
+                Accedi al tuo Account
               </button>
             </div>
           </div>
@@ -202,17 +220,19 @@ export function LandingPage() {
             <button onClick={() => navigate('/privacy')} className="hover:text-primary-600 transition-colors">Privacy Policy</button>
             <button onClick={() => navigate('/contatti')} className="hover:text-primary-600 transition-colors">Contatti</button>
             {user ? (
-              <button onClick={() => navigate('/admin/dashboard')} className="hover:text-primary-600 transition-colors font-bold">Dashboard</button>
-            ) : (
               <>
-                <button onClick={() => navigate('/login')} className="hover:text-primary-600 transition-colors">Login</button>
-                <button onClick={() => navigate('/register')} className="hover:text-primary-600 transition-colors">Registrazione</button>
+                <button onClick={() => navigate('/admin/dashboard')} className="hover:text-primary-600 transition-colors font-bold">Dashboard</button>
+                {isAdmin && (
+                  <button onClick={() => navigate('/superadmin')} className="hover:text-red-500 transition-colors font-bold text-red-500/70">Admin</button>
+                )}
               </>
+            ) : (
+              <button onClick={() => navigate('/login')} className="hover:text-primary-600 transition-colors">Login</button>
             )}
           </div>
           <div className="flex flex-col items-center md:items-end">
             <p className="text-sm text-slate-400">© 2026 VerifichePro. Tutti i diritti riservati.</p>
-            <p className="text-xs font-mono text-slate-300 dark:text-slate-600 mt-1">Versione live: 1.0.1</p>
+            <p className="text-xs font-mono text-slate-300 dark:text-slate-600 mt-1">Versione live: 2.0.0</p>
           </div>
         </div>
       </footer>
