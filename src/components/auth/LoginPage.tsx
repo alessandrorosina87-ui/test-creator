@@ -123,8 +123,14 @@ export function LoginPage() {
             </button>
           </form>
           
-          <div className="mt-8 text-center text-sm text-slate-400 dark:text-slate-500 border-t border-slate-100 dark:border-slate-700 pt-6">
-            Gli account vengono creati dall'amministratore della piattaforma.
+          <div className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400 border-t border-slate-100 dark:border-slate-700 pt-6">
+            Non hai un account?{' '}
+            <button 
+              onClick={() => navigate('/register')}
+              className="text-primary-600 dark:text-primary-400 font-bold hover:underline"
+            >
+              Registrati gratis
+            </button>
           </div>
 
         </div>

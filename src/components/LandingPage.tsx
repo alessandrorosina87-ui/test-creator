@@ -67,8 +67,8 @@ export function LandingPage() {
                   <button onClick={() => navigate('/login')} className="text-sm font-bold text-slate-700 hover:text-primary-600 dark:text-white transition-colors">
                     Accedi
                   </button>
-                  <button onClick={() => navigate('/creator')} className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-colors shadow-sm">
-                    Prova Gratis
+                  <button onClick={() => navigate('/register')} className="text-sm font-bold bg-primary-600 text-white px-5 py-2.5 rounded-xl hover:bg-primary-700 transition-colors shadow-sm">
+                    Registrati Gratis
                   </button>
                 </>
               )}
@@ -87,7 +87,7 @@ export function LandingPage() {
                ) : (
                  <>
                    <button onClick={() => navigate('/login')} className="text-sm font-bold text-slate-700 dark:text-white">Accedi</button>
-                   <button onClick={() => navigate('/creator')} className="text-sm font-bold bg-primary-600 text-white px-4 py-2 rounded-xl">Crea</button>
+                   <button onClick={() => navigate('/register')} className="text-sm font-bold bg-primary-600 text-white px-4 py-2 rounded-xl">Registrati</button>
                  </>
                )}
             </div>
@@ -117,8 +117,8 @@ export function LandingPage() {
                 Vai alla Dashboard
               </button>
             ) : (
-              <button onClick={() => navigate('/login')} className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm flex items-center justify-center">
-                Accedi al tuo account
+              <button onClick={() => navigate('/register')} className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 rounded-2xl font-bold text-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-all shadow-sm flex items-center justify-center">
+                Registrati Gratis
               </button>
             )}
           </div>
@@ -199,8 +199,8 @@ export function LandingPage() {
                 <li className="flex items-center gap-3"><Check size={20} className="text-primary-500" /> <span className="font-medium dark:text-slate-200">Ricerca verifiche per codice</span></li>
                 <li className="flex items-center gap-3"><Check size={20} className="text-primary-500" /> <span className="font-medium dark:text-slate-200">PDF Docente (con soluzioni)</span></li>
               </ul>
-              <button onClick={() => navigate('/login')} className="w-full py-3 rounded-xl font-bold bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-md">
-                Accedi al tuo Account
+              <button onClick={() => navigate('/register')} className="w-full py-3 rounded-xl font-bold bg-primary-600 text-white hover:bg-primary-700 transition-colors shadow-md">
+                Registrati Gratis
               </button>
             </div>
           </div>

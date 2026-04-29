@@ -5,6 +5,7 @@ import App from './App.tsx'
 import { RouterProvider, Routes, useRouter } from './Router.tsx'
 import { LandingPage } from './components/LandingPage.tsx'
 import { LoginPage } from './components/auth/LoginPage.tsx'
+import { RegisterPage } from './components/auth/RegisterPage.tsx'
 import { AdminDashboard } from './components/admin/AdminDashboard.tsx'
 import { ArchivioVerifiche } from './components/admin/ArchivioVerifiche.tsx'
 import { VerificaDetail } from './components/admin/VerificaDetail.tsx'
@@ -132,6 +133,7 @@ function AppRoutes() {
         { pattern: '/', component: LandingPage },
         { pattern: '/creator', component: App },
         { pattern: '/login', component: LoginPage },
+        { pattern: '/register', component: RegisterPage },
         { pattern: '/privacy', component: PrivacyPolicy },
         { pattern: '/contatti', component: Contatti },
         { pattern: '/admin', component: LoginPage }, // Fallback for old /admin route
