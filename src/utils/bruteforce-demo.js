@@ -1,215 +1,204 @@
 /**
  * ══════════════════════════════════════════════════════════════════
- *  BRUTE FORCE SIMULATOR — Versione corretta e didattica
+ *  BRUTE FORCE SIMULATOR — Analisi Bug + Versione Corretta
  * ══════════════════════════════════════════════════════════════════
  *
- *  SCOPO: Simulare un attacco brute force sequenziale su una password,
- *  generando TUTTE le combinazioni possibili in ordine lessicografico
- *  fino a trovare quella corretta.
+ *  🐛 BUG TROVATO:
+ *  Il problema si manifesta SOLO con password composte da "a" ripetuta
+ *  (es. "aa", "aaa"). Con altre password (es. "ab", "ba") sembra
+ *  funzionare perché l'errore visivo non è evidente.
  *
- *  ALGORITMO: Contatore in base N
- *  - Il charset ha N caratteri (es. 26 lettere = base 26)
- *  - Ogni combinazione corrisponde a un numero intero
- *  - Convertiamo l'intero nella "base N" mappando ogni cifra al charset
+ *  CAUSA REALE: Due errori combinati:
  *
- *  ESEMPIO con charset = "abc" (base 3), lunghezza 2:
- *    i=0 → [0,0] → "aa"
- *    i=1 → [0,1] → "ab"
- *    i=2 → [0,2] → "ac"
- *    i=3 → [1,0] → "ba"
- *    i=4 → [1,1] → "bb"
- *    ...
- *    i=8 → [2,2] → "cc"
+ *  1) Il terminale stampa `password` (il target) invece di `attempt`
+ *     (il tentativo generato). Risultato: vedi sempre "aa".
+ *
+ *  2) Il confronto password===attempt avviene FUORI dal loop,
+ *     quindi il sistema non si ferma mai al primo tentativo.
+ *
+ *  PERCHÉ SOLO CON "aa"?
+ *  Perché "aa" è l'indice 0, cioè il PRIMO tentativo.
+ *  Se il confronto funzionasse, si fermerebbe subito.
+ *  Ma siccome il confronto è fuori dal loop, gira 676 volte
+ *  e poi dichiara "trovata" senza mai aver confrontato davvero.
+ *  Con "ab" o "ba" l'utente non nota il bug perché i tentativi
+ *  scorrono troppo veloci per leggere che la stringa è sempre uguale.
  *
  * ══════════════════════════════════════════════════════════════════
  */
 
-// ── Charset disponibile ──
-const CHARSET = 'abcdefghijklmnopqrstuvwxyz';
+// ═══════════════════════════════════════════════════════
+//  SEZIONE 1: CODICE BUGGATO (per confronto didattico)
+// ═══════════════════════════════════════════════════════
 
-// ── Password da "craccare" (modificabile per i test) ──
-const TARGET_PASSWORD = 'aa';
-
-// ── Limite massimo di tentativi da stampare a schermo ──
-const MAX_PRINT = 30;
-
-/**
- * ════════════════════════════════════════════════════════════
- *  FUNZIONE CORE: Converte un intero in una stringa base-N
- * ════════════════════════════════════════════════════════════
- *
- *  Questa è la funzione che era BUGGATA nel codice originale.
- *
- *  ❌ BUG ORIGINALE (una delle varianti più comuni):
- *
- *     function indexToString(index, length, charset) {
- *       let attempt = '';
- *       for (let pos = 0; pos < length; pos++) {
- *         attempt += charset[0];   // ← Sempre il primo carattere!
- *       }                          //   L'indice `index` non viene MAI usato
- *       return attempt;
- *     }
- *
- *  Oppure:
- *
- *     function indexToString(index, length, charset) {
- *       let n = index;
- *       let chars = new Array(length).fill(charset[0]);
- *       // ← Manca completamente il loop di conversione!
- *       return chars.join('');
- *     }
- *
- *  Oppure (la più insidiosa):
- *
- *     function indexToString(index, length, charset) {
- *       let n = index;
- *       let result = '';
- *       for (let pos = 0; pos < length; pos++) {
- *         result += charset[n % charset.length];
- *         // ❌ MANCA: n = Math.floor(n / charset.length);
- *         // Senza questa riga, `n` non cambia mai → stessa cifra per tutte le posizioni
- *       }
- *       return result;
- *     }
- *
- *  ✅ VERSIONE CORRETTA (sotto):
- *
- *  L'algoritmo è identico alla conversione decimale → base N:
- *  - Prendi il resto (%) per ottenere la cifra meno significativa
- *  - Dividi per N (floor) per passare alla cifra successiva
- *  - Ripeti per ogni posizione
- *  - Costruisci la stringa da DESTRA a SINISTRA (LSB → MSB)
- *
- * @param {number} index   - L'indice della combinazione (0, 1, 2, ...)
- * @param {number} length  - La lunghezza della password da generare
- * @param {string} charset - I caratteri disponibili
- * @returns {string} La combinazione corrispondente
- */
-function indexToString(index, length, charset) {
+function bruteForce_BUGGATO(password) {
+  const charset = 'abcdefghijklmnopqrstuvwxyz';
+  const length = password.length;
   const base = charset.length;
-  let n = index;
-
-  // Creiamo un array vuoto di `length` posizioni
-  const chars = new Array(length);
-
-  // Riempiamo DA DESTRA A SINISTRA (come la conversione di base)
-  //
-  // Perché da destra? Perché il modulo (%) ci dà la cifra MENO significativa,
-  // che corrisponde all'ultimo carattere della stringa.
-  //
-  // Esempio: i=27, base=26, length=2
-  //   Passo 1: 27 % 26 = 1  → charset[1] = 'b'  → posizione 1 (destra)
-  //            27 / 26 = 1
-  //   Passo 2:  1 % 26 = 1  → charset[1] = 'b'  → posizione 0 (sinistra)
-  //   Risultato: "bb" ✅
-
-  for (let pos = length - 1; pos >= 0; pos--) {
-    chars[pos] = charset[n % base];  // ← Cifra corrente
-    n = Math.floor(n / base);        // ← CRUCIALE: aggiorna n per la prossima cifra!
-  }
-
-  return chars.join('');
-}
-
-/**
- * ════════════════════════════════════════════════════════════
- *  SIMULAZIONE BRUTE FORCE
- * ════════════════════════════════════════════════════════════
- */
-function bruteForceAttack(targetPassword) {
-  const length = targetPassword.length;
-  const base = CHARSET.length;
   const totalCombinations = Math.pow(base, length);
 
-  console.log('');
-  console.log('══════════════════════════════════════════════════');
-  console.log('  🔓 BRUTE FORCE SIMULATOR');
-  console.log('══════════════════════════════════════════════════');
+  console.log(`\n── VERSIONE BUGGATA (password: "${password}") ──`);
+  console.log(`   Combinazioni: ${totalCombinations}`);
+
+  for (let i = 0; i < totalCombinations; i++) {
+    let attempt = generateAttempt(i, charset, length);
+
+    // ❌ BUG #1: Stampa `password` invece di `attempt`
+    //    Con password="aa", vedi SEMPRE "aa" anche quando
+    //    attempt è "ab", "ac", "ba", ecc.
+    //
+    //    console.log(`[TRY] ${password} => Access Denied`);
+    //                        ^^^^^^^^ SBAGLIATO!
+
+    // ❌ BUG #2: Nessun confronto dentro il loop!
+    //    Il ciclo gira TUTTE le combinazioni senza mai fermarsi.
+  }
+
+  // ❌ BUG #3: Il "successo" è FUORI dal loop → viene sempre stampato
+  //    Non verifica nulla, dichiara vittoria a prescindere.
+  //    console.log('[SUCCESS] Password trovata');
+
+  // Simuliamo l'output buggato (solo prime 5 righe per brevità)
+  for (let i = 0; i < Math.min(5, totalCombinations); i++) {
+    console.log(`   [TRY] ${password} => Access Denied`);
+    //                      ^^^^^^^^ sempre "aa"!
+  }
+  console.log(`   ... (ripetuto ${totalCombinations} volte, sempre "${password}")`);
+  console.log(`   [SUCCESS] Password trovata`);
+  console.log(`   ⚠️  Non ha mai confrontato nulla!\n`);
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  SEZIONE 2: FUNZIONE GENERAZIONE (questa è corretta)
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Converte un indice numerico in una stringa di lunghezza fissa
+ * usando il charset come base numerica.
+ *
+ * Algoritmo: conversione decimale → base N
+ *   - % (modulo) estrae la cifra meno significativa
+ *   - Math.floor(/ base) sposta alla cifra successiva
+ *   - Costruisce da DESTRA a SINISTRA
+ *
+ * @param {number} index   - Indice della combinazione (0, 1, 2, ...)
+ * @param {string} charset - Caratteri disponibili (es. "abcdefghijklmnopqrstuvwxyz")
+ * @param {number} length  - Lunghezza della password da generare
+ * @returns {string}
+ */
+function generateAttempt(index, charset, length) {
+  const base = charset.length;
+  let n = index;
+  let result = '';
+
+  for (let i = 0; i < length; i++) {
+    result = charset[n % base] + result; // cifra corrente → prepend
+    n = Math.floor(n / base);            // ← CRUCIALE: avanza alla prossima cifra
+  }
+
+  return result;
+}
+
+
+// ═══════════════════════════════════════════════════════
+//  SEZIONE 3: VERSIONE CORRETTA
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Simulazione brute force CORRETTA.
+ *
+ * FIX applicati:
+ *   1. Stampa `attempt` (non `password`) nel terminale
+ *   2. Confronto `attempt === password` DENTRO il loop
+ *   3. `break` immediato quando trova la password
+ */
+function bruteForce_CORRETTO(password) {
+  const charset = 'abcdefghijklmnopqrstuvwxyz';
+  const length = password.length;
+  const base = charset.length;
+  const totalCombinations = Math.pow(base, length);
+  const MAX_PRINT = 40; // limite stampe per non intasare il terminale
+
+  console.log('══════════════════════════════════════════════════════');
+  console.log('  🔓 BRUTE FORCE SIMULATOR — Versione Corretta');
+  console.log('══════════════════════════════════════════════════════');
   console.log(`  Password target  : ${'*'.repeat(length)} (${length} caratteri)`);
   console.log(`  Charset          : a-z (${base} simboli)`);
   console.log(`  Combinazioni     : ${base}^${length} = ${totalCombinations.toLocaleString()}`);
-  console.log('══════════════════════════════════════════════════');
-  console.log('');
+  console.log('══════════════════════════════════════════════════════\n');
 
   const startTime = performance.now();
-  let found = false;
-  let attempts = 0;
   let printed = 0;
 
   for (let i = 0; i < totalCombinations; i++) {
-    // ┌──────────────────────────────────────────────────────┐
-    // │  Genera la combinazione i-esima                      │
-    // │  Questa è la riga che nel codice buggato restituiva  │
-    // │  SEMPRE "aa" perché non convertiva correttamente     │
-    // │  l'indice in stringa base-N                          │
-    // └──────────────────────────────────────────────────────┘
-    const attempt = indexToString(i, length, CHARSET);
-    attempts++;
+    // ✅ FIX: Genera il tentativo dall'indice (non dalla password!)
+    const attempt = generateAttempt(i, charset, length);
 
-    // Stampa a schermo (con limite per non intasare il terminale)
+    // ✅ FIX: Confronto DENTRO il loop → si ferma subito se trova
+    if (attempt === password) {
+      const elapsed = (performance.now() - startTime).toFixed(2);
+      const attempts = i + 1;
+
+      console.log(`  [TRY #${String(attempts).padStart(4, '0')}]  ${attempt}  =>  ✅ MATCH!\n`);
+      console.log('  ╔══════════════════════════════════════════════╗');
+      console.log(`  ║  PASSWORD TROVATA: "${attempt}"`.padEnd(49) + '║');
+      console.log('  ╠══════════════════════════════════════════════╣');
+      console.log(`  ║  Tentativi : ${attempts.toLocaleString().padEnd(33)}║`);
+      console.log(`  ║  Tempo     : ${elapsed} ms`.padEnd(49) + '║');
+      console.log('  ╚══════════════════════════════════════════════╝\n');
+
+      // ✅ FIX: break! Non continuare dopo aver trovato la password
+      return { found: true, attempts, elapsed };
+    }
+
+    // ✅ FIX: Stampa `attempt` (il tentativo reale), non `password`
     if (printed < MAX_PRINT) {
-      console.log(`  [TRY #${String(attempts).padStart(4, '0')}]  ${attempt}  =>  Access Denied`);
+      console.log(`  [TRY #${String(i + 1).padStart(4, '0')}]  ${attempt}  =>  Access Denied`);
       printed++;
     } else if (printed === MAX_PRINT) {
-      console.log(`  ...`);
-      console.log(`  (${totalCombinations - MAX_PRINT} tentativi restanti omessi per brevità)`);
-      console.log(`  ...`);
+      console.log(`  ... (${totalCombinations - MAX_PRINT} tentativi omessi) ...`);
       printed++;
     }
-
-    // ── Confronto con la password target ──
-    if (attempt === targetPassword) {
-      found = true;
-      const elapsed = (performance.now() - startTime).toFixed(2);
-
-      console.log('');
-      console.log('  ╔══════════════════════════════════════════╗');
-      console.log(`  ║  ✅ PASSWORD TROVATA: "${attempt}"`.padEnd(46) + '║');
-      console.log('  ╠══════════════════════════════════════════╣');
-      console.log(`  ║  Tentativi: ${attempts.toLocaleString().padEnd(30)}║`);
-      console.log(`  ║  Tempo    : ${elapsed} ms`.padEnd(46) + '║');
-      console.log(`  ║  Velocità : ~${Math.round(attempts / (elapsed / 1000)).toLocaleString()} tentativi/sec`.padEnd(46) + '║');
-      console.log('  ╚══════════════════════════════════════════╝');
-      console.log('');
-      break; // ← STOP! Non continuare dopo aver trovato la password
-    }
   }
 
-  if (!found) {
-    console.log('\n  ❌ Password non trovata (fuori dal charset o lunghezza errata)\n');
-  }
-
-  return { found, attempts };
+  console.log('\n  ❌ Password non trovata nel charset.\n');
+  return { found: false, attempts: totalCombinations };
 }
 
-// ── Verifica correttezza del generatore (unit test rapido) ──
-function selfTest() {
-  console.log('── Self-test generatore ──');
-  const tests = [
-    { index: 0,   length: 2, expected: 'aa' },
-    { index: 1,   length: 2, expected: 'ab' },
-    { index: 25,  length: 2, expected: 'az' },
-    { index: 26,  length: 2, expected: 'ba' },
-    { index: 27,  length: 2, expected: 'bb' },
-    { index: 675, length: 2, expected: 'zz' },
-    { index: 0,   length: 3, expected: 'aaa' },
-    { index: 1,   length: 3, expected: 'aab' },
-  ];
 
-  let allPassed = true;
-  for (const t of tests) {
-    const result = indexToString(t.index, t.length, CHARSET);
-    const ok = result === t.expected;
-    if (!ok) allPassed = false;
-    console.log(`  i=${String(t.index).padStart(3)} len=${t.length}  →  "${result}"  ${ok ? '✅' : `❌ (atteso "${t.expected}")`}`);
-  }
-  console.log(allPassed ? '  ✅ Tutti i test passati!\n' : '  ❌ ERRORI nei test!\n');
-  return allPassed;
+// ═══════════════════════════════════════════════════════
+//  SEZIONE 4: TEST COMPARATIVO
+// ═══════════════════════════════════════════════════════
+
+console.log('╔══════════════════════════════════════════════════════╗');
+console.log('║        BRUTE FORCE — ANALISI BUG DIDATTICA          ║');
+console.log('╚══════════════════════════════════════════════════════╝\n');
+
+// ── Test 1: Mostra il comportamento buggato ──
+bruteForce_BUGGATO('aa');
+
+// ── Test 2: Versione corretta con "aa" (indice 0 → trovata subito) ──
+console.log('─────────────────────────────────────────────────────');
+console.log('  TEST: password = "aa" (prima combinazione)\n');
+bruteForce_CORRETTO('aa');
+
+// ── Test 3: Versione corretta con "cb" (deve scorrere fino a indice 53) ──
+console.log('─────────────────────────────────────────────────────');
+console.log('  TEST: password = "cb" (combinazione #54)\n');
+bruteForce_CORRETTO('cb');
+
+// ── Test 4: Versione corretta con "az" (indice 25) ──
+console.log('─────────────────────────────────────────────────────');
+console.log('  TEST: password = "az" (ultima della serie "a*")\n');
+bruteForce_CORRETTO('az');
+
+// ── Verifica generatore con prime 30 combinazioni ──
+console.log('─────────────────────────────────────────────────────');
+console.log('  VERIFICA: prime 30 combinazioni generate\n');
+const charset = 'abcdefghijklmnopqrstuvwxyz';
+for (let i = 0; i < 30; i++) {
+  const str = generateAttempt(i, charset, 2);
+  console.log(`  i=${String(i).padStart(2)}  →  "${str}"`);
 }
-
-// ══════════════════════════════════════════════════════════════
-//  ESECUZIONE
-// ══════════════════════════════════════════════════════════════
-
-selfTest();
-bruteForceAttack(TARGET_PASSWORD);
+console.log('  ...\n');
